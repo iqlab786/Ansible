@@ -1,6 +1,5 @@
 ---
 collections:
-  - name: cisco.ios
-    version: 11.0.0
+  - name: https://galaxy.ansible.com/download/cisco-ios-11.0.0.tar.gz
   - name: ansible.netcommon
-    version: 8.1.0
+  - name: community.general
