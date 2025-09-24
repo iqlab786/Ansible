@@ -5,7 +5,7 @@
 
   tasks:
     - name: Show IP interfaces
-      ios_command:
+      cisco.ios.ios_command:
         commands:
           - show ip interface brief
       register: ip_interfaces
@@ -15,7 +15,7 @@
         var: ip_interfaces.stdout_lines
 
     - name: Show version
-      ios_command:
+      cisco.ios.ios_command:
         commands:
           - show version
       register: version_info
@@ -23,4 +23,3 @@
     - name: Display device info
       debug:
         var: version_info.stdout_lines
-
