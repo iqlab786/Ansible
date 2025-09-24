@@ -1,0 +1,26 @@
+- name: Gather L2 switch info
+  hosts: cisco_ios
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Show IP interfaces
+      ios_command:
+        commands:
+          - show ip interface brief
+      register: ip_interfaces
+
+    - name: Display interface info
+      debug:
+        var: ip_interfaces.stdout_lines
+
+    - name: Show version
+      ios_command:
+        commands:
+          - show version
+      register: version_info
+
+    - name: Display device info
+      debug:
+        var: version_info.stdout_lines
+
