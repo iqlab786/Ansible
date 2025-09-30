@@ -1,0 +1,13 @@
+- name: Backup running-config from router
+  hosts: cisco_ios
+  gather_facts: no
+  tasks:
+    - name: Get running configuration
+      cisco.ios.ios_command:
+        commands: show running-config
+      register: running_config
+
+    - name: Save running configuration to local file
+      copy:
+        content: "{{ running_config.stdout[0] }}"
+        dest: "/home/vboxuser/backups/{{ inventory_hostname }}_running.cfg"
