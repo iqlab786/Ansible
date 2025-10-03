@@ -6,7 +6,7 @@
       cisco.ios.ios_command:
         commands: show running-config
       register: running_config
-      ignore_errors: yes   # So playbook continues even if one device fails
+      ignore_errors: yes
 
     - name: Save running configuration to local file
       copy:
@@ -14,20 +14,17 @@
         dest: "/home/vboxuser/backups/{{ inventory_hostname }}_running.cfg"
       ignore_errors: yes
 
-    - name: Send job notification
-      hosts: localhost
-      gather_facts: no
-      vars:
-        status: "{{ 'FAILED' if running_config is failed else 'SUCCESS' }}"
+    - name: Send job notification email
       mail:
         host: smtp.gmail.com
         port: 587
         username: "zxcvuiop2414@gmail.com"
         password: "ndtlwhkfktrxaaqx"
         to: "zxcvuiop2414@gmail.com"
-        subject: "Backup Job Notification: {{ status }}"
+        subject: "Backup Job Notification"
         body: |
           Playbook: Backup running-config
-          Status: {{ status }}
+          Status: {{ 'FAILED' if running_config is failed else 'SUCCESS' }}
           Hosts processed: {{ ansible_play_hosts_all | join(', ') }}
+      delegate_to: localhost
       run_once: true
