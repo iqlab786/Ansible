@@ -1,0 +1,9 @@
+---
+- name: Test Email Alert
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Print test message
+      debug:
+        msg: "This is a test email from Semaphore"
