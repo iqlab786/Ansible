@@ -1,9 +1,6 @@
----
-- name: Test Email Alert
+- name: Test Email Alert Failure
   hosts: localhost
-  gather_facts: no
-
   tasks:
-    - name: Print test message
-      debug:
-        msg: "This is a test email from Semaphore"
+    - name: Fail the task
+      fail:
+        msg: "This is a test failure to trigger email"
