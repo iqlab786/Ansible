@@ -1,6 +1,20 @@
-- name: Test Email Alert Failure
+- name: Send email on failure
   hosts: localhost
+  gather_facts: false
   tasks:
-    - name: Fail the task
-      fail:
-        msg: "This is a test failure to trigger email"
+    - name: Run some task
+      command: /bin/false
+      ignore_errors: true
+      register: result
+
+    - name: Send email if task failed
+      mail:
+        host: smtp.gmail.com
+        port: 587
+        username: "zxcvuiop2414@gmail.com"
+        password: "ndtlwhkfktrxaaqx"
+        to: "zxcvuiop2414@gmail.com"
+        subject: "Task Failed Alert"
+        body: "The task failed with error: {{ result.stderr }}"
+        secure: starttls
+      when: result.rc != 0
