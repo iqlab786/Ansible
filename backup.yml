@@ -24,7 +24,7 @@
     - name: Save running configuration to local file
       copy:
         content: "{{ running_config.stdout[0] | default('No output') }}"
-        dest: "/home/vboxuser/backups/{{ inventory_hostname }}_running.cfg"
+        dest: "/backups/{{ inventory_hostname }}_running.cfg"
       when: running_config is succeeded
 
     - name: Set playbook status
