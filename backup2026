@@ -1,0 +1,50 @@
+---
+- name: Backup running-config from all devices
+  hosts: routers
+  gather_facts: no
+
+  vars:
+    email_to: "zxcvuiop2414@gmail.com"
+
+  tasks:
+
+    - name: Get running configuration
+      shell: |
+        sshpass -p '{{ ansible_password }}' ssh \
+        -o StrictHostKeyChecking=no \
+        -o KexAlgorithms=+diffie-hellman-group14-sha1 \
+        -o HostKeyAlgorithms=+ssh-rsa \
+        -o MACs=hmac-sha1,hmac-sha1-96 \
+        {{ ansible_user }}@{{ inventory_hostname }} "show running-config"
+
+      register: running_config
+      ignore_errors: yes
+
+    - name: Save running configuration to local file
+      copy:
+        content: "{{ running_config.stdout }}"
+        dest: "/backups/{{ inventory_hostname }}_running.cfg"
+
+      when: running_config is succeeded
+
+    - name: Set playbook status
+      set_fact:
+        playbook_status: "{{ 'FAILED' if running_config is failed else 'SUCCESS' }}"
+
+    - name: Send email notification
+      mail:
+        host: smtp.gmail.com
+        port: 587
+        username: "zxcvuiop2414@gmail.com"
+        password: "ndtlwhkfktrxaaqx"
+        to: "{{ email_to }}"
+        subject: "Backup Playbook {{ playbook_status }}"
+        body: |
+          Backup completed.
+
+          Device: {{ inventory_hostname }}
+          Status: {{ playbook_status }}
+
+        secure: starttls
+
+      ignore_errors: yes
