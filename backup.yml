@@ -1,6 +1,6 @@
 ---
 - name: Backup running-config from all devices
-  hosts: all_devices
+  hosts: routers
   gather_facts: no
   vars:
     email_to: "zxcvuiop2414@gmail.com"
