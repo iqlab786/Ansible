@@ -1,0 +1,35 @@
+---
+- name: Windows Patch Information Report
+  hosts: windows
+  gather_facts: yes
+
+  vars:
+    report_file: ./windows_patch_info.csv
+
+  tasks:
+
+    - name: Create CSV header
+      lineinfile:
+        path: "{{ report_file }}"
+        line: "Hostname,KB,Title,Category,RebootRequired"
+        create: yes
+      delegate_to: localhost
+      run_once: true
+
+    - name: Check available Windows updates
+      win_updates:
+        state: searched
+      register: update_info
+
+    - name: Write update details to CSV
+      lineinfile:
+        path: "{{ report_file }}"
+        line: >-
+          {{ inventory_hostname }},
+          {{ item.kb | default('N/A') }},
+          "{{ item.title | regex_replace(',', ' ') }}",
+          {{ item.categories | join(';') }},
+          {{ update_info.reboot_required | default(false) }}
+        create: yes
+      loop: "{{ update_info.updates | default([]) }}"
+      delegate_to: localhost
