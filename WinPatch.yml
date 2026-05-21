@@ -4,32 +4,71 @@
   gather_facts: yes
 
   vars:
-    report_file: ./windows_patch_info.csv
+    report_path: "/reports/windows_patch_report.csv"
+    email_to: "zxcvuiop2414@gmail.com"
 
   tasks:
 
+    - name: Create reports directory
+      file:
+        path: /reports
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+
     - name: Create CSV header
       lineinfile:
-        path: "{{ report_file }}"
-        line: "Hostname,KB,Title,Category,RebootRequired"
+        path: "{{ report_path }}"
+        line: "Hostname,KB,Title,Categories,RebootRequired"
         create: yes
       delegate_to: localhost
       run_once: true
 
-    - name: Check available Windows updates
+    - name: Search available Windows updates
       win_updates:
         state: searched
-      register: update_info
+      register: update_result
 
-    - name: Write update details to CSV
+    - name: Add update details to report
       lineinfile:
-        path: "{{ report_file }}"
+        path: "{{ report_path }}"
         line: >-
           {{ inventory_hostname }},
           {{ item.kb | default('N/A') }},
           "{{ item.title | regex_replace(',', ' ') }}",
-          {{ item.categories | join(';') }},
-          {{ update_info.reboot_required | default(false) }}
+          "{{ item.categories | join(';') }}",
+          {{ update_result.reboot_required | default(false) }}
         create: yes
-      loop: "{{ update_info.updates | default([]) }}"
+
+      loop: "{{ update_result.updates | default([]) }}"
       delegate_to: localhost
+
+    - name: Set patch status
+      set_fact:
+        patch_status: "{{ 'SUCCESS' if update_result.failed is not defined else 'FAILED' }}"
+
+    - name: Send email notification
+      mail:
+        host: smtp.gmail.com
+        port: 587
+        username: "zxcvuiop2414@gmail.com"
+        password: "{{ gmail_app_password }}"
+        to: "{{ email_to }}"
+        subject: "Windows Patch Report - {{ inventory_hostname }}"
+        body: |
+          Patch report completed.
+
+          Server: {{ inventory_hostname }}
+          Status: {{ patch_status }}
+
+          Report File:
+          {{ report_path }}
+
+        attach:
+          - "{{ report_path }}"
+
+        secure: starttls
+
+      delegate_to: localhost
+      ignore_errors: yes
