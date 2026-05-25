@@ -4,24 +4,22 @@
   gather_facts: yes
 
   vars:
-    report_path: "/reports/windows_patch_report.csv"
-    email_to: "zxcvuiop2414@gmail.com"
+    report_path: "/data/Ansible/semaphore/data/reports/windows_patch_report.csv"
 
   tasks:
 
     - name: Create reports directory
       file:
-        path: /reports
+        path: /data/Ansible/semaphore/data/reports
         state: directory
         mode: '0755'
       delegate_to: localhost
       run_once: true
 
-    - name: Create CSV header
-      lineinfile:
-        path: "{{ report_path }}"
-        line: "Hostname,KB,Title,Categories,RebootRequired"
-        create: yes
+    - name: Create CSV report with header
+      copy:
+        dest: "{{ report_path }}"
+        content: "Hostname,KB,Title,Categories,RebootRequired\n"
       delegate_to: localhost
       run_once: true
 
@@ -41,34 +39,10 @@
           {{ update_result.reboot_required | default(false) }}
         create: yes
 
-      loop: "{{ update_result.updates | default([]) }}"
+      loop: "{{ update_result.updates.values() | list }}"
+      when: update_result.updates | length > 0
       delegate_to: localhost
 
-    - name: Set patch status
-      set_fact:
-        patch_status: "{{ 'SUCCESS' if update_result.failed is not defined else 'FAILED' }}"
-
-    - name: Send email notification
-      mail:
-        host: smtp.gmail.com
-        port: 587
-        username: "zxcvuiop2414@gmail.com"
-        password: "{{ gmail_app_password }}"
-        to: "{{ email_to }}"
-        subject: "Windows Patch Report - {{ inventory_hostname }}"
-        body: |
-          Patch report completed.
-
-          Server: {{ inventory_hostname }}
-          Status: {{ patch_status }}
-
-          Report File:
-          {{ report_path }}
-
-        attach:
-          - "{{ report_path }}"
-
-        secure: starttls
-
-      delegate_to: localhost
-      ignore_errors: yes
+    - name: Show report path
+      debug:
+        msg: "Patch report generated at {{ report_path }}"
